@@ -5,6 +5,7 @@ COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr
 # Install PHP extensions one by one with lower optimization level for ARM64 compatibility
 RUN CFLAGS="-O0" install-php-extensions pcntl && \
     CFLAGS="-O0 -g0" install-php-extensions bcmath && \
+    install-php-extensions fileinfo && \
     install-php-extensions zip && \
     install-php-extensions redis && \
     apk --no-cache add shadow sqlite mysql-client mysql-dev mariadb-connector-c git patch supervisor redis && \
@@ -15,31 +16,20 @@ RUN CFLAGS="-O0" install-php-extensions pcntl && \
 WORKDIR /www
 
 COPY .docker /
-
-# Add build arguments
-ARG CACHEBUST
-ARG REPO_URL
-ARG BRANCH_NAME
-
-RUN echo "Attempting to clone branch: ${BRANCH_NAME} from ${REPO_URL} with CACHEBUST: ${CACHEBUST}" && \
-    rm -rf ./* && \
-    rm -rf .git && \
-    git config --global --add safe.directory /www && \
-    git clone --depth 1 --branch ${BRANCH_NAME} ${REPO_URL} . && \
-    git submodule update --init --recursive --force
+COPY --chown=www:www . /www
 
 COPY .docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-RUN composer install --no-cache --no-dev \
+RUN composer install --no-cache --no-dev --no-interaction --prefer-dist --classmap-authoritative \
     && php artisan storage:link \
     && cp -r plugins/ /opt/default-plugins/ \
-    && chown -R www:www /www \
     && chmod -R 775 /www \
     && mkdir -p /data \
     && chown redis:redis /data
     
 ENV ENABLE_WEB=true \
     ENABLE_HORIZON=true \
+    ENABLE_SCHEDULER=true \
     ENABLE_REDIS=false \
     ENABLE_WS_SERVER=false
 

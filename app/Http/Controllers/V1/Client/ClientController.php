@@ -7,9 +7,11 @@ use App\Models\Server;
 use App\Protocols\General;
 use App\Services\Plugin\HookManager;
 use App\Services\ServerService;
+use App\Services\SubscriptionDeviceService;
 use App\Services\UserService;
 use App\Utils\Helper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ClientController extends Controller
 {
@@ -59,6 +61,16 @@ class ClientController extends Controller
         }
 
         $clientInfo = $this->getClientInfo($request);
+
+        // Device history is observational and must never block subscription delivery.
+        try {
+            app(SubscriptionDeviceService::class)->observeSubscriptionAccess($user, $request, $clientInfo);
+        } catch (\Throwable $e) {
+            Log::warning('Unable to record subscription client', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $requestedTypes = $this->parseRequestedTypes($request->input('types'));
         $filterKeywords = $this->parseFilterKeywords($request->input('filter'));

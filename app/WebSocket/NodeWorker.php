@@ -24,6 +24,7 @@ class NodeWorker
         'pong' => [NodeEventHandlers::class, 'handlePong'],
         'node.status' => [NodeEventHandlers::class, 'handleNodeStatus'],
         'report.devices' => [NodeEventHandlers::class, 'handleDeviceReport'],
+        'report.device_traffic' => [NodeEventHandlers::class, 'handleDeviceTraffic'],
         'request.devices' => [NodeEventHandlers::class, 'handleDeviceRequest'],
     ];
 

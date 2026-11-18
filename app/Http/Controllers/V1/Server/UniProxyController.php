@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\DeviceStateService;
 use App\Services\NodeSyncService;
 use App\Services\ServerService;
+use App\Services\SubscriptionDeviceService;
 use App\Services\UserService;
 use App\Utils\CacheKey;
 use App\Utils\Helper;
@@ -130,6 +131,29 @@ class UniProxyController extends Controller
         }
 
         return response()->json(['data' => true]);
+    }
+
+    // Optional analytics endpoint for upgraded node agents. Values are deltas.
+    public function deviceTraffic(Request $request): JsonResponse
+    {
+        $node = $this->getNodeInfo($request);
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            return response()->json(['error' => 'Invalid device traffic data'], 422);
+        }
+
+        $reportId = isset($payload['report_id']) ? (string) $payload['report_id'] : null;
+        $data = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload;
+        if ($reportId !== null) {
+            unset($data['report_id']);
+        }
+
+        try {
+            $accepted = app(SubscriptionDeviceService::class)->recordTraffic($node, $data, $reportId);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+        return response()->json(['data' => true, 'accepted' => $accepted]);
     }
 
     // 提交节点负载状态

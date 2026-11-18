@@ -1,0 +1,55 @@
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 5px var(--c-primary-glow); }
+  50% { box-shadow: 0 0 20px var(--c-primary-glow), 0 0 40px var(--c-primary-light); }
+}
+
+.anim-fade { animation: fadeIn 0.3s ease; }
+.anim-fade-up { animation: fadeInUp 0.4s ease; }
+.anim-slide-left { animation: slideInLeft 0.3s ease; }
+.anim-slide-right { animation: slideInRight 0.3s ease; }
+.anim-scale { animation: scaleIn 0.25s ease; }
+.anim-pulse { animation: pulse 2s infinite; }
+.anim-spin { animation: spin 1s linear infinite; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--c-bg-elevated) 25%, var(--c-bg-hover) 50%, var(--c-bg-elevated) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--r-sm);
+}
+
+/* Page transition */
+.page-enter-active { animation: fadeIn 0.25s ease; }
+.page-leave-active { animation: fadeIn 0.15s ease reverse; }

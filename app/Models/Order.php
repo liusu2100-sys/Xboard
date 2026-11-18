@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $status
  * @property array|null $surplus_order_ids
  * @property int|null $coupon_id
+ * @property int|null $coupon_released_at
  * @property int $created_at
  * @property int $updated_at
  * @property int|null $commission_status
@@ -50,7 +51,8 @@ class Order extends Model
         'created_at' => 'timestamp',
         'updated_at' => 'timestamp',
         'surplus_order_ids' => 'array',
-        'handling_amount' => 'integer'
+        'handling_amount' => 'integer',
+        'coupon_released_at' => 'integer',
     ];
 
     const STATUS_PENDING = 0; // 待支付

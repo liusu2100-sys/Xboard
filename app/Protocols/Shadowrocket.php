@@ -192,9 +192,10 @@ class Shadowrocket extends AbstractProtocol
                 $config['sni'] = data_get($protocol_settings, 'reality_settings.server_name');
                 $config['pbk'] = data_get($protocol_settings, 'reality_settings.public_key');
                 $config['sid'] = data_get($protocol_settings, 'reality_settings.short_id');
-                if ($fp = Helper::getTlsFingerprint(data_get($protocol_settings, 'utls'))) {
-                    $config['fp'] = $fp;
-                }
+                $config['fp'] = Helper::getTlsFingerprint([
+                    'enabled' => true,
+                    'fingerprint' => data_get($protocol_settings, 'utls.fingerprint', 'chrome'),
+                ]) ?: 'chrome';
                 break;
             default:
                 break;
@@ -280,6 +281,10 @@ class Shadowrocket extends AbstractProtocol
                 $params['pbk'] = data_get($protocol_settings, 'reality_settings.public_key');
                 $params['sid'] = data_get($protocol_settings, 'reality_settings.short_id');
                 $params['sni'] = data_get($protocol_settings, 'reality_settings.server_name');
+                $params['fp'] = Helper::getTlsFingerprint([
+                    'enabled' => true,
+                    'fingerprint' => data_get($protocol_settings, 'utls.fingerprint', 'chrome'),
+                ]) ?: 'chrome';
                 break;
             default: // Standard TLS
                 $params['allowInsecure'] = data_get($protocol_settings, 'allow_insecure');

@@ -10,10 +10,19 @@ use App\Support\AbstractProtocol;
 
 class ClashMeta extends AbstractProtocol
 {
-    public $flags = ['meta', 'verge', 'flclash', 'nekobox', 'clashmetaforandroid'];
+    public $flags = [
+        'meta',
+        'mihomo',
+        'clashmeta',
+        'clash.meta',
+        'verge',
+        'flclash',
+        'nekobox',
+        'clashmetaforandroid',
+    ];
     const CUSTOM_TEMPLATE_FILE = 'resources/rules/custom.clashmeta.yaml';
     const CUSTOM_CLASH_TEMPLATE_FILE = 'resources/rules/custom.clash.yaml';
-    const DEFAULT_TEMPLATE_FILE = 'resources/rules/default.clash.yaml';
+    const DEFAULT_TEMPLATE_FILE = 'resources/rules/default.clashmeta.yaml';
     public $allowedProtocols = [
         Server::TYPE_SHADOWSOCKS,
         Server::TYPE_VMESS,
@@ -66,9 +75,7 @@ class ClashMeta extends AbstractProtocol
         $user = $this->user;
         $appName = admin_setting('app_name', 'XBoard');
 
-        $template = subscribe_template('clashmeta');
-
-        $config = Yaml::parse($template);
+        $config = $this->loadConfig();
         $proxy = [];
         $proxies = [];
 
@@ -115,7 +122,7 @@ class ClashMeta extends AbstractProtocol
             }
         }
 
-        $config['proxies'] = array_merge($config['proxies'] ? $config['proxies'] : [], $proxy);
+        $config['proxies'] = array_merge($config['proxies'] ?? [], $proxy);
         foreach ($config['proxy-groups'] as $k => $v) {
             if (!is_array($config['proxy-groups'][$k]['proxies']))
                 $config['proxy-groups'][$k]['proxies'] = [];
@@ -152,23 +159,76 @@ class ClashMeta extends AbstractProtocol
             ->header('content-disposition', 'attachment;filename*=UTF-8\'\'' . rawurlencode($appName));
     }
 
+    private function loadConfig(): array
+    {
+        $fallback = File::get(base_path(self::DEFAULT_TEMPLATE_FILE));
+        $template = subscribe_template('clashmeta') ?: $fallback;
+
+        try {
+            $config = Yaml::parse($template);
+        } catch (\Throwable) {
+            $config = null;
+        }
+
+        if (!is_array($config)
+            || !is_array($config['proxy-groups'] ?? null)
+            || !is_array($config['rules'] ?? null)) {
+            $config = Yaml::parse($fallback);
+        }
+
+        $config['proxies'] = is_array($config['proxies'] ?? null) ? $config['proxies'] : [];
+        $config['dns'] = is_array($config['dns'] ?? null) ? $config['dns'] : [];
+
+        return $config;
+    }
+
     /**
      * Build the rules for Clash.
      */
     public function buildRules($config)
     {
-        // Force the current subscription domain to be a direct rule
-        $subsDomain = request()->header('Host');
-        if ($subsDomain) {
-            array_unshift($config['rules'], "DOMAIN,{$subsDomain},DIRECT");
+        $config['dns'] = is_array($config['dns'] ?? null) ? $config['dns'] : [];
+        $config['rules'] = is_array($config['rules'] ?? null) ? $config['rules'] : [];
+        $config['dns']['proxy-server-nameserver'] = $config['dns']['proxy-server-nameserver'] ?? [
+            '223.5.5.5',
+            '119.29.29.29',
+        ];
+        $config['dns']['direct-nameserver'] = $config['dns']['direct-nameserver'] ?? [
+            '223.5.5.5',
+            '119.29.29.29',
+        ];
+
+        $hosts = collect($this->servers)
+            ->pluck('host')
+            ->push(request()->getHost())
+            ->map(fn($host) => trim((string) $host, "[] \t\n\r\0\x0B."))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $directRules = [];
+        $fakeIpFilters = is_array($config['dns']['fake-ip-filter'] ?? null)
+            ? $config['dns']['fake-ip-filter']
+            : [];
+        foreach ($hosts as $host) {
+            if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                $directRules[] = "IP-CIDR,{$host}/32,DIRECT,no-resolve";
+                continue;
+            }
+            if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                $directRules[] = "IP-CIDR6,{$host}/128,DIRECT,no-resolve";
+                continue;
+            }
+            if (!filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)) {
+                continue;
+            }
+
+            $directRules[] = "DOMAIN,{$host},DIRECT";
+            $fakeIpFilters[] = $host;
         }
-        // // Force the nodes ip to be a direct rule
-        // collect($this->servers)->pluck('host')->map(function ($host) {
-        //     $host = trim($host);
-        //     return filter_var($host, FILTER_VALIDATE_IP) ? [$host] : Helper::getIpByDomainName($host);
-        // })->flatten()->unique()->each(function ($nodeIP) use (&$config) {
-        //     array_unshift($config['rules'], "IP-CIDR,{$nodeIP}/32,DIRECT,no-resolve");
-        // });
+
+        $config['dns']['fake-ip-filter'] = array_values(array_unique($fakeIpFilters));
+        $config['rules'] = array_values(array_unique(array_merge($directRules, $config['rules'])));
 
         return $config;
     }
@@ -357,6 +417,7 @@ class ClashMeta extends AbstractProtocol
                     'short-id' => data_get($protocol_settings, 'reality_settings.short_id')
                 ];
                 self::appendUtls($array, $protocol_settings);
+                self::appendRealityFingerprint($array, $protocol_settings);
                 break;
             default:
                 break;
@@ -448,6 +509,7 @@ class ClashMeta extends AbstractProtocol
         }
 
         self::appendUtls($array, $protocol_settings);
+        self::appendRealityFingerprint($array, $protocol_settings, $tlsMode);
         self::appendMultiplex($array, $protocol_settings);
 
         switch (data_get($protocol_settings, 'network')) {
@@ -652,27 +714,6 @@ class ClashMeta extends AbstractProtocol
         return $array;
     }
 
-    private function isMatch($exp, $str)
-    {
-        try {
-            return preg_match($exp, $str) === 1;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    private function isRegex($exp)
-    {
-        if (empty($exp)) {
-            return false;
-        }
-        try {
-            return preg_match($exp, '') !== false;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
     protected static function appendMultiplex(&$array, $protocol_settings)
     {
         if ($multiplex = data_get($protocol_settings, 'multiplex')) {
@@ -704,5 +745,17 @@ class ClashMeta extends AbstractProtocol
                 $array['client-fingerprint'] = Helper::getTlsFingerprint($utls);
             }
         }
+    }
+
+    protected static function appendRealityFingerprint(&$array, $protocolSettings, ?int $tlsMode = 2): void
+    {
+        if ($tlsMode !== 2 || !empty($array['client-fingerprint'])) {
+            return;
+        }
+
+        $array['client-fingerprint'] = Helper::getTlsFingerprint([
+            'enabled' => true,
+            'fingerprint' => data_get($protocolSettings, 'utls.fingerprint', 'chrome'),
+        ]) ?: 'chrome';
     }
 }

@@ -21,6 +21,16 @@ services:
     command: php artisan horizon
     depends_on:
       - redis
+  scheduler:
+    image: ghcr.io/cedar2025/xboard:new
+    volumes:
+      - redis-data:/data
+      - ./:/www/
+    restart: always
+    network_mode: host
+    command: php artisan schedule:work
+    depends_on:
+      - redis
   ws-server:
     image: ghcr.io/cedar2025/xboard:new
     volumes:

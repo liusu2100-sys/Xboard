@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class GiftCardService
 {
-    protected readonly GiftCardCode $code;
-    protected readonly GiftCardTemplate $template;
+    protected GiftCardCode $code;
+    protected GiftCardTemplate $template;
     protected ?User $user = null;
 
     public function __construct(string $code)
@@ -106,6 +106,20 @@ class GiftCardService
         }
 
         return DB::transaction(function () use ($options) {
+            $this->code = GiftCardCode::query()
+                ->whereKey($this->code->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $this->template = GiftCardTemplate::query()
+                ->whereKey($this->code->template_id)
+                ->firstOrFail();
+            $this->user = User::query()
+                ->whereKey($this->user->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            // Every eligibility decision must use the locked, current records.
+            $this->validate();
             $actualRewards = $this->template->calculateActualRewards($this->user);
 
             if ($this->template->type === GiftCardTemplate::TYPE_MYSTERY) {

@@ -40,6 +40,7 @@ return new class extends Migration
             'clashmeta' => [
                 'resources/rules/custom.clashmeta.yaml',
                 'resources/rules/custom.clash.yaml',
+                'resources/rules/default.clashmeta.yaml',
                 'resources/rules/default.clash.yaml',
             ],
             'stash' => [

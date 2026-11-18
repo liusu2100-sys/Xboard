@@ -27,7 +27,7 @@ class Clash extends AbstractProtocol
         $appName = admin_setting('app_name', 'XBoard');
 
         // 优先从数据库配置中获取模板
-        $template = subscribe_template('clash');
+        $template = subscribe_template('clash') ?: File::get(base_path(self::DEFAULT_TEMPLATE_FILE));
 
         $config = Yaml::parse($template);
         $proxy = [];
@@ -309,24 +309,4 @@ class Clash extends AbstractProtocol
         return $array;
     }
 
-    private function isMatch($exp, $str)
-    {
-        try {
-            return preg_match($exp, $str) === 1;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    private function isRegex($exp)
-    {
-        if (empty($exp)) {
-            return false;
-        }
-        try {
-            return preg_match($exp, '') !== false;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2\Server;
 use App\Http\Controllers\Controller;
 use App\Services\DeviceStateService;
 use App\Services\ServerService;
+use App\Services\SubscriptionDeviceService;
 use App\Services\UserService;
 use App\Utils\CacheKey;
 use Illuminate\Http\Request;
@@ -96,6 +97,26 @@ class ServerController extends Controller
             foreach ($online as $uid => $conn) {
                 $cacheKey = CacheKey::get("USER_ONLINE_CONN_{$nodeType}_{$nodeId}", $uid);
                 Cache::put($cacheKey, (int) $conn, $cacheTime);
+            }
+        }
+
+        // Optional per-device traffic deltas. Aggregate traffic above remains
+        // the sole billing source, so this analytics channel cannot double bill.
+        $deviceTraffic = $request->input('device_traffic');
+        if (is_array($deviceTraffic) && !empty($deviceTraffic)) {
+            try {
+                app(SubscriptionDeviceService::class)->recordTraffic(
+                    $node,
+                    $deviceTraffic,
+                    $request->filled('device_traffic_report_id')
+                        ? (string) $request->input('device_traffic_report_id')
+                        : null
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Device traffic report failed', [
+                    'node_id' => $nodeId,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 

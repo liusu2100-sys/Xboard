@@ -22,15 +22,19 @@ class PlanService
      *
      * @return Collection
      */
-    public function getAvailablePlans(): Collection
+    public function getAvailablePlans(?User $user = null): Collection
     {
-        return Plan::where('show', true)
-            ->where('sell', true)
+        return Plan::query()
             ->orderBy('sort')
             ->get()
-            ->filter(function ($plan) {
-                return $this->hasCapacity($plan);
-            });
+            ->filter(function ($plan) use ($user) {
+                if ($user && $user->plan_id === $plan->id) {
+                    return $plan->renew && $plan->sell;
+                }
+
+                return $plan->show && $plan->sell && $this->hasCapacity($plan);
+            })
+            ->values();
     }
 
     /**
@@ -59,7 +63,7 @@ class PlanService
     {
         // 如果是续费
         if ($user->plan_id === $plan->id) {
-            return $plan->renew;
+            return $plan->renew && $plan->sell;
         }
 
         // 如果是新购

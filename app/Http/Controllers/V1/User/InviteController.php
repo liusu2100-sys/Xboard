@@ -26,6 +26,25 @@ class InviteController extends Controller
         return $this->success($inviteCode->save());
     }
 
+    public function delete(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string|max:32',
+        ]);
+
+        $inviteCode = InviteCode::where('user_id', $request->user()->id)
+            ->where('code', $request->input('code'))
+            ->where('status', InviteCode::STATUS_UNUSED)
+            ->first();
+
+        if (!$inviteCode) {
+            return $this->fail([400, __('Invite code does not exist')]);
+        }
+
+        $inviteCode->status = InviteCode::STATUS_USED;
+        return $this->success($inviteCode->save());
+    }
+
     public function details(Request $request)
     {
         $current = $request->input('current') ? $request->input('current') : 1;
