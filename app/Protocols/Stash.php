@@ -305,7 +305,8 @@ class Stash extends AbstractProtocol
         $array['uuid'] = $uuid;
         $array['udp'] = true;
 
-        if ($fingerprint = Helper::getTlsFingerprint(data_get($protocol_settings, 'utls'))) {
+        $utls = data_get($protocol_settings, 'utls');
+        if (data_get($utls, 'enabled') && ($fingerprint = Helper::getTlsFingerprint($utls))) {
             $array['client-fingerprint'] = $fingerprint;
         }
 
@@ -319,6 +320,10 @@ class Stash extends AbstractProtocol
                 break;
             case 2:
                 $array['tls'] = true;
+                $array['client-fingerprint'] = Helper::getTlsFingerprint([
+                    'enabled' => true,
+                    'fingerprint' => data_get($protocol_settings, 'utls.fingerprint', 'chrome'),
+                ]) ?: 'chrome';
                 $array['skip-cert-verify'] = (bool) data_get($protocol_settings, 'reality_settings.allow_insecure', false);
                 if ($serverName = data_get($protocol_settings, 'reality_settings.server_name')) {
                     $array['servername'] = $serverName;
@@ -387,6 +392,10 @@ class Stash extends AbstractProtocol
         switch ($tlsMode) {
             case 2: // Reality
                 $array['tls'] = true;
+                $array['client-fingerprint'] = Helper::getTlsFingerprint([
+                    'enabled' => true,
+                    'fingerprint' => data_get($protocol_settings, 'utls.fingerprint', 'chrome'),
+                ]) ?: 'chrome';
                 $array['skip-cert-verify'] = (bool) data_get($protocol_settings, 'reality_settings.allow_insecure', false);
                 if ($serverName = data_get($protocol_settings, 'reality_settings.server_name')) {
                     $array['sni'] = $serverName;
@@ -564,24 +573,4 @@ class Stash extends AbstractProtocol
         return $array;
     }
 
-    private function isRegex($exp)
-    {
-        if (empty($exp)) {
-            return false;
-        }
-        try {
-            return preg_match($exp, '') !== false;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    private function isMatch($exp, $str)
-    {
-        try {
-            return preg_match($exp, $str);
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
 }
