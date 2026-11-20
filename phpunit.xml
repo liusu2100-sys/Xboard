@@ -19,6 +19,7 @@
         <env name="DB_CONNECTION" value="sqlite" force="true"/>
         <env name="DB_DATABASE" value=":memory:" force="true"/>
         <env name="DATABASE_URL" value="(null)" force="true"/>
+        <env name="REDIS_PREFIX" value="xboard_test:" force="true"/>
         <env name="CACHE_STORE" value="array" force="true"/>
         <env name="CACHE_DRIVER" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>

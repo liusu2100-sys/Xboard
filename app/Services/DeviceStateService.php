@@ -198,7 +198,7 @@ class DeviceStateService
             return null;
         }
         $ip = trim($value);
-        if (preg_match('/^(?:\[([a-f0-9:]+)\]|(\d+\.\d+\.\d+\.\d+)):\d+$/i', $ip, $matches)) {
+        if (preg_match('/^(?:\[([a-f0-9:.]+)\]|(\d+\.\d+\.\d+\.\d+)):\d+$/i', $ip, $matches)) {
             $ip = $matches[1] ?: $matches[2];
         }
         return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : null;

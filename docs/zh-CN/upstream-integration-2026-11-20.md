@@ -9,7 +9,7 @@
 | `ClashMeta.php`、`SingBox.php` | 保留官方 XHTTP/ECH 与 Sing-box 策略组筛选，增加本地 Mihomo 识别、DNS 与 Reality 指纹、模板回退和格式转换。 |
 | `Dockerfile`、`supervisord.conf`、`compose.sample.yaml`、`.gitignore` | 镜像使用检出的源码和管理后台子模块，保留官方 Caddy、Redis 与入口脚本。默认由 Web 角色运行调度。 |
 | `composer.lock` | 保留项目的主版本约束，针对 Composer 审计结果更新锁定依赖，去除不再使用的库。 |
-| `tests/TestCase.php` | 采用官方 Laravel 测试基类。通过 PHPUnit 配置启用内存 SQLite，财务测试夹具使用独立连接。 |
+| `tests/TestCase.php`、`.github/workflows/ci.yml` | 采用官方 Laravel 测试基类。PHPUnit 使用内存 SQLite，财务测试夹具使用独立连接。CI 提供独立 Redis 服务用于设备与节点相关测试。 |
 
 Flavor 和 Rocket 的源码与运行资源随镜像交付，套餐、邀请码、会话和设备接口与两套主题一并移植。
 
