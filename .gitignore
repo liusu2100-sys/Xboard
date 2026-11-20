@@ -10,6 +10,7 @@
 .env
 .env.backup
 .phpunit.result.cache
+.phpunit.cache
 .idea
 Homestead.json
 Homestead.yaml
@@ -32,3 +33,7 @@ compose.yaml
 compose.host.yaml
 compose.split.yaml
 .scribe
+/.agents/
+/.codex/
+/.aws/
+/20260607/

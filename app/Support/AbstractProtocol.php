@@ -263,4 +263,23 @@ abstract class AbstractProtocol
         }
         return $result;
     }
+
+    protected function isRegex(mixed $expression): bool
+    {
+        if (!is_string($expression) || strlen($expression) < 3) {
+            return false;
+        }
+
+        $delimiter = $expression[0];
+        if (ctype_alnum($delimiter) || ctype_space($delimiter) || $delimiter === '\\') {
+            return false;
+        }
+
+        return @preg_match($expression, '') !== false;
+    }
+
+    protected function isMatch(mixed $expression, string $value): bool
+    {
+        return $this->isRegex($expression) && preg_match($expression, $value) === 1;
+    }
 }

@@ -6,6 +6,7 @@ use Illuminate\Support\Arr;
 use App\Support\AbstractProtocol;
 use App\Models\Server;
 use Log;
+use Illuminate\Support\Facades\File;
 
 class SingBox extends AbstractProtocol
 {
@@ -21,7 +22,7 @@ class SingBox extends AbstractProtocol
         Server::TYPE_SOCKS,
         Server::TYPE_HTTP,
     ];
-    private $config;
+    private array $config = [];
     const CUSTOM_TEMPLATE_FILE = 'resources/rules/custom.sing-box.json';
     const DEFAULT_TEMPLATE_FILE = 'resources/rules/default.sing-box.json';
 
@@ -125,16 +126,27 @@ class SingBox extends AbstractProtocol
             ->header('profile-update-interval', '24');
     }
 
-    protected function loadConfig()
+    protected function loadConfig(): array
     {
         $jsonData = subscribe_template('singbox');
+        $config = is_string($jsonData) ? json_decode($jsonData, true) : null;
+        if (is_array($config)
+            && is_array($config['outbounds'] ?? null)
+            && is_array($config['route']['rules'] ?? null)) {
+            return $config;
+        }
 
-        return is_array($jsonData) ? $jsonData : json_decode($jsonData, true);
+        return json_decode(
+            File::get(base_path(self::DEFAULT_TEMPLATE_FILE)),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        );
     }
 
     protected function buildOutbounds()
     {
-        $outbounds = $this->config['outbounds'];
+        $outbounds = $this->config['outbounds'] ?? [];
         $proxies = [];
         foreach ($this->servers as $item) {
             $protocol_settings = $item['protocol_settings'];
@@ -307,7 +319,7 @@ class SingBox extends AbstractProtocol
      */
     protected function buildRule()
     {
-        $rules = $this->config['route']['rules'];
+        $rules = $this->config['route']['rules'] ?? [];
         $this->config['route']['rules'] = $rules;
     }
 
@@ -318,13 +330,16 @@ class SingBox extends AbstractProtocol
     protected function adaptConfigForVersion(): void
     {
         $coreVersion = $this->getSingBoxCoreVersion();
-        if (empty($coreVersion)) {
-            return;
+
+        if (version_compare($coreVersion, '1.12.0', '>=')) {
+            $this->convertDnsServersToModern();
+            $this->configureModernDomainResolver();
         }
 
         // >= 1.13.0: 移除已删除的 block/dns 出站
         if (version_compare($coreVersion, '1.13.0', '>=')) {
             $this->upgradeSpecialOutboundsToActions();
+            $this->removeDeprecatedInboundFields();
         }
 
         // < 1.11.0: rule action 降级为旧出站; 恢复废弃字段
@@ -336,6 +351,7 @@ class SingBox extends AbstractProtocol
         // < 1.12.0: DNS type+server → 旧 address 格式
         if (version_compare($coreVersion, '1.12.0', '<')) {
             $this->convertDnsServersToLegacy();
+            unset($this->config['route']['default_domain_resolver']);
         }
 
         // < 1.10.0: tun address 数组 → inet4_address/inet6_address
@@ -347,7 +363,7 @@ class SingBox extends AbstractProtocol
     /**
      * 获取核心版本 (Hiddify/SFM 等映射到内核版本)
      */
-    private function getSingBoxCoreVersion(): ?string
+    private function getSingBoxCoreVersion(): string
     {
         // 优先从 UA 提取核心版本
         if (!empty($this->userAgent)) {
@@ -356,15 +372,13 @@ class SingBox extends AbstractProtocol
             }
         }
 
-        if (empty($this->clientVersion)) {
-            return null;
-        }
-
-        if ($this->clientName === 'sing-box') {
+        if ($this->clientName === 'sing-box' && !empty($this->clientVersion)) {
             return $this->clientVersion;
         }
 
-        return '1.13.0';
+        // Hiddify/SFM do not expose a stable core version in every UA. Their
+        // current releases require the modern 1.14-compatible schema.
+        return '1.14.0';
     }
 
     /**
@@ -410,8 +424,10 @@ class SingBox extends AbstractProtocol
         $needsBlockOutbound = false;
 
         if (isset($this->config['route']['rules'])) {
-            foreach ($this->config['route']['rules'] as &$rule) {
+            $rules = [];
+            foreach ($this->config['route']['rules'] as $rule) {
                 if (!isset($rule['action'])) {
+                    $rules[] = $rule;
                     continue;
                 }
                 switch ($rule['action']) {
@@ -425,9 +441,13 @@ class SingBox extends AbstractProtocol
                         $rule['outbound'] = 'block';
                         $needsBlockOutbound = true;
                         break;
+                    case 'sniff':
+                    case 'resolve':
+                        continue 2;
                 }
+                $rules[] = $rule;
             }
-            unset($rule);
+            $this->config['route']['rules'] = $rules;
         }
 
         if ($needsBlockOutbound) {
@@ -447,13 +467,101 @@ class SingBox extends AbstractProtocol
             return;
         }
         foreach ($this->config['inbounds'] as &$inbound) {
-            if ($inbound['type'] === 'tun') {
+            if (($inbound['type'] ?? null) === 'tun') {
                 $inbound['endpoint_independent_nat'] = true;
             }
-            if (!empty($inbound['sniff'])) {
-                $inbound['sniff_override_destination'] = true;
+            $inbound['sniff'] = true;
+            $inbound['sniff_override_destination'] = true;
+            $inbound['domain_strategy'] = 'prefer_ipv4';
+        }
+        unset($inbound);
+    }
+
+    private function removeDeprecatedInboundFields(): void
+    {
+        if (!isset($this->config['inbounds']) || !is_array($this->config['inbounds'])) {
+            return;
+        }
+
+        foreach ($this->config['inbounds'] as &$inbound) {
+            foreach ([
+                'sniff',
+                'sniff_override_destination',
+                'sniff_timeout',
+                'domain_strategy',
+                'udp_disable_domain_unmapping',
+                'endpoint_independent_nat',
+            ] as $field) {
+                unset($inbound[$field]);
             }
         }
+        unset($inbound);
+
+        $rules = $this->config['route']['rules'] ?? [];
+        $hasSniffRule = collect($rules)->contains(fn($rule) => ($rule['action'] ?? null) === 'sniff');
+        if (!$hasSniffRule) {
+            array_unshift($rules, ['action' => 'sniff']);
+        }
+        $this->config['route']['rules'] = $rules;
+    }
+
+    private function convertDnsServersToModern(): void
+    {
+        if (!isset($this->config['dns']['servers']) || !is_array($this->config['dns']['servers'])) {
+            return;
+        }
+
+        foreach ($this->config['dns']['servers'] as &$server) {
+            if (isset($server['type']) || empty($server['address'])) {
+                continue;
+            }
+
+            $address = (string) $server['address'];
+            if ($address === 'local') {
+                $server['type'] = 'local';
+            } elseif (str_starts_with($address, 'rcode://')) {
+                $server['type'] = 'rcode';
+                $server['rcode'] = substr($address, strlen('rcode://')) ?: 'success';
+            } elseif (preg_match('#^(https|h3|tls|tcp|quic|udp)://(.+)$#', $address, $matches)) {
+                $server['type'] = $matches[1];
+                $parsed = parse_url($address);
+                $server['server'] = $parsed['host'] ?? $matches[2];
+                if (!empty($parsed['port'])) {
+                    $server['server_port'] = $parsed['port'];
+                }
+                if (in_array($matches[1], ['https', 'h3'], true)
+                    && !empty($parsed['path'])
+                    && $parsed['path'] !== '/dns-query') {
+                    $server['path'] = $parsed['path'];
+                }
+            } else {
+                $server['type'] = 'udp';
+                $server['server'] = $address;
+            }
+
+            unset($server['address'], $server['address_resolver'], $server['address_strategy']);
+        }
+        unset($server);
+    }
+
+    private function configureModernDomainResolver(): void
+    {
+        $dnsServers = collect($this->config['dns']['servers'] ?? []);
+        $resolver = data_get($dnsServers->firstWhere('tag', 'local'), 'tag')
+            ?? data_get($dnsServers->first(), 'tag');
+        if (!$resolver) {
+            return;
+        }
+
+        $this->config['route']['default_domain_resolver'] ??= [
+            'server' => $resolver,
+            'strategy' => 'prefer_ipv4',
+        ];
+
+        $this->config['dns']['rules'] = array_values(array_filter(
+            $this->config['dns']['rules'] ?? [],
+            fn($rule) => !array_key_exists('outbound', $rule)
+        ));
     }
 
     /**
@@ -471,6 +579,9 @@ class SingBox extends AbstractProtocol
             $type = $server['type'];
             $host = $server['server'] ?? null;
             switch ($type) {
+                case 'local':
+                    $server['address'] = 'local';
+                    break;
                 case 'https':
                     $server['address'] = "https://{$host}/dns-query";
                     break;
@@ -500,6 +611,15 @@ class SingBox extends AbstractProtocol
             unset($server['type'], $server['server']);
         }
         unset($server);
+
+        if (isset($this->config['dns']['rules']) && is_array($this->config['dns']['rules'])) {
+            foreach ($this->config['dns']['rules'] as &$rule) {
+                if (($rule['action'] ?? null) === 'route') {
+                    unset($rule['action']);
+                }
+            }
+            unset($rule);
+        }
     }
 
     /**
@@ -604,6 +724,7 @@ class SingBox extends AbstractProtocol
             ];
 
             $this->appendUtls($tlsConfig, $protocol_settings);
+            $this->appendRealityUtls($tlsConfig, $protocol_settings, $tlsMode);
 
             switch ($tlsMode) {
                 case 1:
@@ -668,6 +789,7 @@ class SingBox extends AbstractProtocol
         }
 
         $this->appendUtls($tlsConfig, $protocol_settings);
+        $this->appendRealityUtls($tlsConfig, $protocol_settings, $tlsMode);
         $array['tls'] = $tlsConfig;
 
         $this->appendMultiplex($array, $protocol_settings);
@@ -691,7 +813,7 @@ class SingBox extends AbstractProtocol
             ]
         ];
         // 支持 1.11.0 版本及以上 `server_ports` 和 `hop_interval` 配置
-        if ($this->supportsFeature('sing-box', '1.11.0')) {
+        if (version_compare($this->getSingBoxCoreVersion(), '1.11.0', '>=')) {
             if (isset($server['ports'])) {
                 $baseConfig['server_ports'] = [str_replace('-', ':', $server['ports'])];
             }
@@ -931,5 +1053,21 @@ class SingBox extends AbstractProtocol
                 'query_server_name' => data_get($normalized, 'query_server_name'),
             ], fn($value) => $value !== null);
         }
+    }
+
+    protected function appendRealityUtls(&$tlsConfig, $protocol_settings, int $tlsMode): void
+    {
+        if ($tlsMode !== 2 || isset($tlsConfig['utls'])) {
+            return;
+        }
+
+        $fingerprint = data_get($protocol_settings, 'utls.fingerprint') ?: 'chrome';
+        $tlsConfig['utls'] = [
+            'enabled' => true,
+            'fingerprint' => Helper::getTlsFingerprint([
+                'enabled' => true,
+                'fingerprint' => $fingerprint,
+            ]) ?: 'chrome',
+        ];
     }
 }

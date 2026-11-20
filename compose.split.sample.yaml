@@ -21,7 +21,7 @@ services:
       - ./.docker/caddy/Caddyfile.split:/etc/caddy/Caddyfile:ro
 
   web:
-    image: ghcr.io/cedar2025/xboard:latest
+    image: ${XBOARD_IMAGE:-ghcr.io/cedar2025/xboard:latest}
     restart: unless-stopped
     depends_on:
       - redis
@@ -35,10 +35,12 @@ services:
       docker: "true"
       ENABLE_CADDY: "false"
       ENABLE_HORIZON: "false"
+      ENABLE_SCHEDULER: "true"
       ENABLE_WS_SERVER: "false"
+      ENABLE_REDIS: "false"
 
   horizon:
-    image: ghcr.io/cedar2025/xboard:latest
+    image: ${XBOARD_IMAGE:-ghcr.io/cedar2025/xboard:latest}
     restart: unless-stopped
     depends_on:
       - redis
@@ -47,10 +49,12 @@ services:
       docker: "true"
       ENABLE_CADDY: "false"
       ENABLE_WEB: "false"
+      ENABLE_SCHEDULER: "false"
       ENABLE_WS_SERVER: "false"
+      ENABLE_REDIS: "false"
 
   ws-server:
-    image: ghcr.io/cedar2025/xboard:latest
+    image: ${XBOARD_IMAGE:-ghcr.io/cedar2025/xboard:latest}
     restart: unless-stopped
     depends_on:
       - redis
@@ -60,10 +64,12 @@ services:
       ENABLE_CADDY: "false"
       ENABLE_WEB: "false"
       ENABLE_HORIZON: "false"
+      ENABLE_SCHEDULER: "false"
+      ENABLE_REDIS: "false"
       WS_HOST: "0.0.0.0"
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     restart: unless-stopped
     command: redis-server --unixsocket /data/redis.sock --unixsocketperm 777 --save 900 1 --save 300 10 --save 60 10000
     volumes:

@@ -4,22 +4,16 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 class DeviceStateService
 {
     private const PREFIX = 'user_devices:';
+    private const NODE_INDEX_PREFIX = 'node_device_users:';
     private const TTL = 300;                     // device state ttl
     private const DB_THROTTLE = 10;             // update db throttle
-
-    /**
-     * 移除 Redis key 的前缀
-     */
-    private function removeRedisPrefix(string $key): string
-    {
-        $prefix = config('database.redis.options.prefix', '');
-        return $prefix ? substr($key, strlen($prefix)) : $key;
-    }
 
     /**
      * 批量设置设备
@@ -30,10 +24,20 @@ class DeviceStateService
         $key = self::PREFIX . $userId;
         $timestamp = time();
 
-        $this->removeNodeDevices($nodeId, $userId);
+        $this->removeNodeDevices($nodeId, $userId, false);
 
-        // Normalize: strip port suffix and deduplicate
-        $ips = array_values(array_unique(array_map([self::class, 'normalizeIP'], $ips)));
+        // Persist richer device metadata as a side channel. Any failure here
+        // must not interrupt the legacy Redis device-limit implementation.
+        try {
+            $ips = app(SubscriptionDeviceService::class)->recordAlive($userId, $nodeId, $ips);
+        } catch (\Throwable $e) {
+            Log::warning('Subscription device report could not be persisted', [
+                'user_id' => $userId,
+                'node_id' => $nodeId,
+                'error' => $e->getMessage(),
+            ]);
+            $ips = $this->extractLegacyIps($ips);
+        }
 
         if (!empty($ips)) {
             $fields = [];
@@ -42,6 +46,10 @@ class DeviceStateService
             }
             Redis::hMset($key, $fields);
             Redis::expire($key, self::TTL);
+            Redis::sadd(self::NODE_INDEX_PREFIX . $nodeId, $userId);
+            Redis::expire(self::NODE_INDEX_PREFIX . $nodeId, self::TTL * 2);
+        } else {
+            Redis::srem(self::NODE_INDEX_PREFIX . $nodeId, $userId);
         }
 
         $this->notifyUpdate($userId);
@@ -53,18 +61,20 @@ class DeviceStateService
      */
     public function getNodeDevices(int $nodeId): array
     {
-        $keys = Redis::keys(self::PREFIX . '*');
+        $userIds = Redis::smembers(self::NODE_INDEX_PREFIX . $nodeId);
         $prefix = "{$nodeId}:";
         $result = [];
-        foreach ($keys as $key) {
-            $actualKey = $this->removeRedisPrefix($key);
-            $uid = (int) substr($actualKey, strlen(self::PREFIX));
-            $data = Redis::hgetall($actualKey);
+        foreach ($userIds as $userId) {
+            $uid = (int) $userId;
+            $data = Redis::hgetall(self::PREFIX . $uid);
             foreach ($data as $field => $timestamp) {
                 if (str_starts_with($field, $prefix)) {
                     $ip = substr($field, strlen($prefix));
                     $result[$uid][] = $ip;
                 }
+            }
+            if (!isset($result[$uid])) {
+                Redis::srem(self::NODE_INDEX_PREFIX . $nodeId, $uid);
             }
         }
 
@@ -74,7 +84,7 @@ class DeviceStateService
     /**
      * 删除某节点某用户的设备
      */
-    public function removeNodeDevices(int $nodeId, int $userId): void
+    public function removeNodeDevices(int $nodeId, int $userId, bool $persistOffline = true): void
     {
         $key = self::PREFIX . $userId;
         $prefix = "{$nodeId}:";
@@ -82,6 +92,15 @@ class DeviceStateService
         foreach (Redis::hkeys($key) as $field) {
             if (str_starts_with($field, $prefix)) {
                 Redis::hdel($key, $field);
+            }
+        }
+        Redis::srem(self::NODE_INDEX_PREFIX . $nodeId, $userId);
+
+        if ($persistOffline) {
+            try {
+                app(SubscriptionDeviceService::class)->markUserNodeOffline($userId, $nodeId);
+            } catch (\Throwable $e) {
+                Log::debug('Subscription device presence cleanup skipped', ['error' => $e->getMessage()]);
             }
         }
     }
@@ -92,16 +111,16 @@ class DeviceStateService
     public function clearAllNodeDevices(int $nodeId): array
     {
         $oldDevices = $this->getNodeDevices($nodeId);
-        $prefix = "{$nodeId}:";
-
         foreach ($oldDevices as $userId => $ips) {
-            $key = self::PREFIX . $userId;
-            foreach (Redis::hkeys($key) as $field) {
-                if (str_starts_with($field, $prefix)) {
-                    Redis::hdel($key, $field);
-                }
-            }
-            $this->notifyUpdate($userId);
+            $this->removeNodeDevices($nodeId, $userId, false);
+            $this->notifyUpdate($userId, true);
+        }
+        Redis::del(self::NODE_INDEX_PREFIX . $nodeId);
+
+        try {
+            app(SubscriptionDeviceService::class)->markNodeOffline($nodeId);
+        } catch (\Throwable $e) {
+            Log::debug('Subscription node presence cleanup skipped', ['error' => $e->getMessage()]);
         }
 
         return array_keys($oldDevices);
@@ -117,7 +136,7 @@ class DeviceStateService
         $ips = [];
 
         foreach ($data as $field => $timestamp) {
-            if ($now - $timestamp <= self::TTL) {
+            if ($now - (int) $timestamp <= self::TTL) {
                 $ips[] = substr($field, strpos($field, ':') + 1);
             }
         }
@@ -157,7 +176,7 @@ class DeviceStateService
             if (!empty($data)) {
                 $ips = [];
                 foreach ($data as $field => $timestamp) {
-                    if ($now - $timestamp <= self::TTL) {
+                    if ($now - (int) $timestamp <= self::TTL) {
                         $ips[] = substr($field, strpos($field, ':') + 1);
                     }
                 }
@@ -173,35 +192,47 @@ class DeviceStateService
     /**
      * Strip port from IP address: "1.2.3.4:12345" → "1.2.3.4", "[::1]:443" → "::1"
      */
-    private static function normalizeIP(string $ip): string
+    public static function normalizeReportedIp(mixed $value): ?string
     {
-        // [IPv6]:port
-        if (preg_match('/^\[(.+)\]:\d+$/', $ip, $m)) {
-            return $m[1];
+        if (!is_string($value)) {
+            return null;
         }
-        // IPv4:port
-        if (preg_match('/^(\d+\.\d+\.\d+\.\d+):\d+$/', $ip, $m)) {
-            return $m[1];
+        $ip = trim($value);
+        if (preg_match('/^(?:\[([a-f0-9:.]+)\]|(\d+\.\d+\.\d+\.\d+)):\d+$/i', $ip, $matches)) {
+            $ip = $matches[1] ?: $matches[2];
         }
-        return $ip;
+        return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : null;
     }
 
     /**
      * notify update (throttle control)
      */
-    public function notifyUpdate(int $userId): void
+    public function notifyUpdate(int $userId, bool $force = false): void
     {
         $dbThrottleKey = "device:db_throttle:{$userId}";
 
-        // if (Redis::setnx($dbThrottleKey, 1)) {
-        //     Redis::expire($dbThrottleKey, self::DB_THROTTLE);
-
+        if ($force || Cache::add($dbThrottleKey, 1, self::DB_THROTTLE)) {
             User::query()
                 ->whereKey($userId)
                 ->update([
                     'online_count' => $this->getDeviceCount($userId),
                     'last_online_at' => now(),
                 ]);
-        // }
+        }
+    }
+
+    private function extractLegacyIps(array $devices): array
+    {
+        if (isset($devices['ip']) || isset($devices['address'])) {
+            $devices = [$devices];
+        }
+        $ips = [];
+        foreach ($devices as $device) {
+            $address = is_array($device) ? ($device['ip'] ?? $device['address'] ?? null) : $device;
+            if ($ip = self::normalizeReportedIp($address)) {
+                $ips[] = $ip;
+            }
+        }
+        return array_values(array_unique($ips));
     }
 }

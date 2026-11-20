@@ -1,0 +1,181 @@
+:root {
+  /* Primary - AirRocket inspired teal with blue acceleration accents */
+  --c-primary: #219f88;
+  --c-primary-hover: #16836f;
+  --c-primary-light: rgba(33, 159, 136, 0.12);
+  --c-primary-glow: rgba(33, 159, 136, 0.22);
+  --c-primary-soft: #e9f8f5;
+  --c-accent: #3b82f6;
+  --c-accent-hover: #2563eb;
+  --c-accent-light: rgba(59, 130, 246, 0.12);
+  --c-accent-2: #06b6d4;
+
+  /* Backgrounds - clean network console surface */
+  --c-bg-base: #f3f8fb;
+  --c-bg-card: rgba(255, 255, 255, 0.92);
+  --c-bg-solid: #ffffff;
+  --c-bg-elevated: #f7fbfc;
+  --c-bg-input: #ffffff;
+  --c-bg-hover: #eef6f8;
+  --c-bg-shell: linear-gradient(180deg, #eef8ff 0%, #f8fcfd 44%, #eef5f7 100%);
+  --c-surface-glass: rgba(255, 255, 255, 0.78);
+
+  /* Text */
+  --c-text-1: #0f172a;
+  --c-text-2: #526074;
+  --c-text-3: #93a3b5;
+  --c-text-inverse: #ffffff;
+
+  /* Borders */
+  --c-border: rgba(148, 163, 184, 0.22);
+  --c-border-light: rgba(148, 163, 184, 0.36);
+
+  /* Status */
+  --c-success: #22c55e;
+  --c-warning: #f59e0b;
+  --c-danger: #ef4444;
+  --c-info: #3b82f6;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--c-primary), #36c2a6);
+  --gradient-accent: linear-gradient(135deg, var(--c-accent), var(--c-accent-2));
+  --gradient-hero: linear-gradient(135deg, #0f766e 0%, #1d9a8b 45%, #2f7df0 100%);
+  --gradient-panel: linear-gradient(145deg, rgba(255,255,255,0.96), rgba(241,249,251,0.9));
+
+  /* Shadows - floating but restrained */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 8px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 10px 28px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 18px 60px rgba(15, 23, 42, 0.12);
+  --shadow-card: 0 12px 34px rgba(31, 122, 140, 0.09);
+  --shadow-float: 0 18px 45px rgba(33, 159, 136, 0.18);
+  --shadow-glow: 0 10px 30px var(--c-primary-glow);
+
+  /* Radius */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-full: 9999px;
+
+  /* Spacing */
+  --s-xs: 4px;
+  --s-sm: 8px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 32px;
+  --s-2xl: 48px;
+
+  /* Typography */
+  --font: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-base: 1rem;
+  --fs-md: 1.125rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.625rem;
+  --fs-2xl: 2.25rem;
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* Layout */
+  --sidebar-w: 240px;
+  --sidebar-collapsed-w: 64px;
+  --topbar-h: 60px;
+  --navbar-h: 56px;
+
+  /* Transitions */
+  --t-fast: 150ms ease;
+  --t-base: 250ms ease;
+  --t-slow: 400ms ease;
+}
+
+/* ========== Dark Mode ========== */
+[data-theme="dark"] {
+  --c-primary: #2dd4bf;
+  --c-primary-hover: #14b8a6;
+  --c-primary-light: rgba(45, 212, 191, 0.14);
+  --c-primary-glow: rgba(45, 212, 191, 0.24);
+  --c-primary-soft: rgba(45, 212, 191, 0.1);
+  --c-accent: #60a5fa;
+  --c-accent-hover: #3b82f6;
+  --c-accent-light: rgba(96, 165, 250, 0.16);
+  --c-accent-2: #22d3ee;
+
+  --c-bg-base: #07121f;
+  --c-bg-card: rgba(13, 27, 42, 0.9);
+  --c-bg-solid: #0d1b2a;
+  --c-bg-elevated: rgba(22, 39, 59, 0.9);
+  --c-bg-input: rgba(15, 30, 47, 0.92);
+  --c-bg-hover: rgba(45, 212, 191, 0.1);
+  --c-bg-shell: linear-gradient(180deg, #07121f 0%, #0a1726 55%, #07121f 100%);
+  --c-surface-glass: rgba(13, 27, 42, 0.72);
+
+  --c-text-1: #edf7fb;
+  --c-text-2: #a8b7c9;
+  --c-text-3: #6d7f94;
+
+  --c-border: rgba(148, 163, 184, 0.2);
+  --c-border-light: rgba(148, 163, 184, 0.34);
+
+  --gradient-primary: linear-gradient(135deg, #14b8a6, #22d3ee);
+  --gradient-accent: linear-gradient(135deg, #3b82f6, #22d3ee);
+  --gradient-hero: linear-gradient(135deg, #0f766e 0%, #0e7490 48%, #2563eb 100%);
+  --gradient-panel: linear-gradient(145deg, rgba(13,27,42,0.96), rgba(16,36,56,0.92));
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.24);
+  --shadow-md: 0 10px 28px rgba(0,0,0,0.28);
+  --shadow-lg: 0 20px 64px rgba(0,0,0,0.42);
+  --shadow-card: 0 14px 40px rgba(0,0,0,0.24);
+  --shadow-float: 0 18px 45px rgba(45, 212, 191, 0.12);
+}
+
+/* ========== Theme Color Variants ========== */
+
+/* Blue (蓝色) */
+[data-theme-color="blue"] {
+  --c-primary: #3b82f6;
+  --c-primary-hover: #2563eb;
+  --c-primary-light: rgba(59, 130, 246, 0.1);
+  --c-primary-glow: rgba(59, 130, 246, 0.25);
+}
+[data-theme="dark"][data-theme-color="blue"] {
+  --c-primary: #60a5fa;
+  --c-primary-hover: #3b82f6;
+  --c-primary-light: rgba(96, 165, 250, 0.12);
+  --c-primary-glow: rgba(96, 165, 250, 0.3);
+}
+
+/* Purple (紫色) */
+[data-theme-color="purple"] {
+  --c-primary: #8b5cf6;
+  --c-primary-hover: #7c3aed;
+  --c-primary-light: rgba(139, 92, 246, 0.1);
+  --c-primary-glow: rgba(139, 92, 246, 0.25);
+}
+[data-theme="dark"][data-theme-color="purple"] {
+  --c-primary: #a78bfa;
+  --c-primary-hover: #8b5cf6;
+  --c-primary-light: rgba(167, 139, 250, 0.12);
+  --c-primary-glow: rgba(167, 139, 250, 0.3);
+}
+
+/* Orange (橙色) */
+[data-theme-color="orange"] {
+  --c-primary: #f97316;
+  --c-primary-hover: #ea580c;
+  --c-primary-light: rgba(249, 115, 22, 0.1);
+  --c-primary-glow: rgba(249, 115, 22, 0.25);
+}
+[data-theme="dark"][data-theme-color="orange"] {
+  --c-primary: #fb923c;
+  --c-primary-hover: #f97316;
+  --c-primary-light: rgba(251, 146, 60, 0.12);
+  --c-primary-glow: rgba(251, 146, 60, 0.3);
+}
+
+/* ========== Custom Background ========== */
+[data-bg-custom] {
+  --c-bg-base: transparent;
+}

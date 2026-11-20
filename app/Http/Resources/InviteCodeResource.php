@@ -15,6 +15,7 @@ class InviteCodeResource extends JsonResource
     public function toArray(Request $request): array
     {
         $data = [
+            "id" => $this['id'],
             "user_id" => $this['user_id'],
             "code" => $this['code'],
             "pv"    => $this['pv'],

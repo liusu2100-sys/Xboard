@@ -49,6 +49,7 @@ class OrderServiceConcurrencyTest extends TestCase
         $order = $this->makeOrder($user, $plan, [
             'status' => Order::STATUS_PROCESSING,
             'balance_amount' => 1100,
+            'surplus_credit' => 374,
             'total_amount' => 0,
         ]);
 
@@ -60,6 +61,7 @@ class OrderServiceConcurrencyTest extends TestCase
         (new OrderService($secondStaleOrder))->open();
 
         $user->refresh();
+        $this->assertSame(374, $user->balance);
         $this->assertSame(1, $user->reset_count);
         $this->assertSame(Order::STATUS_COMPLETED, Order::findOrFail($order->id)->status);
         $this->assertLessThan($before + (45 * 86400), $user->expired_at);

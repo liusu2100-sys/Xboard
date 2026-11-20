@@ -11,7 +11,7 @@ COPY --from=composer:2.10.3 /usr/bin/composer /usr/local/bin/composer
 RUN CFLAGS="-O0" install-php-extensions pcntl && \
     CFLAGS="-O0 -g0" install-php-extensions bcmath
 
-RUN IPE_PROCESSOR_COUNT=2 install-php-extensions zip
+RUN IPE_PROCESSOR_COUNT=2 install-php-extensions fileinfo zip
 
 # Keep Redis independent of Alpine's package version to preserve RDB 14 compatibility.
 COPY --from=redis:8-alpine /usr/local/bin/redis-* /usr/local/bin/
@@ -43,23 +43,16 @@ FROM runtime AS app
 WORKDIR /www
 
 COPY .docker /
+COPY --chown=www:www . /www
 
-ARG CACHEBUST=1
-ARG REPO_URL=https://github.com/cedar2025/Xboard
-ARG BRANCH_NAME=master
-
-RUN echo "Attempting to clone branch: ${BRANCH_NAME} from ${REPO_URL} with CACHEBUST: ${CACHEBUST}" && \
-    rm -rf ./* && \
-    rm -rf .git && \
-    git config --global --add safe.directory /www && \
-    git clone --depth 1 --branch ${BRANCH_NAME} ${REPO_URL} . && \
-    git submodule update --init --recursive --force
+RUN test -s public/assets/admin/index.html || \
+    (echo 'Initialize the admin submodule before building the image.' >&2; exit 1)
 
 COPY .docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY .docker/caddy/Caddyfile /etc/caddy/Caddyfile
 COPY .docker/php/zz-xboard.ini /usr/local/etc/php/conf.d/zz-xboard.ini
 
-RUN composer install --no-cache --no-dev --no-security-blocking \
+RUN composer install --no-cache --no-dev --no-interaction --prefer-dist \
     && php artisan storage:link \
     && chown -R www:www /www \
     && chmod -R 775 /www \

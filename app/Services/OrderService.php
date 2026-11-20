@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\ApiException;
 use App\Jobs\OrderHandleJob;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Plan;
 use App\Models\TrafficResetLog;
@@ -130,6 +131,7 @@ class OrderService
                 throw new \RuntimeException('订阅不存在');
             }
 
+            $this->order = $order;
             HookManager::call('order.open.before', $order);
 
             $this->user = User::lockForUpdate()->find($order->user_id);
@@ -367,6 +369,14 @@ class OrderService
                 }
 
                 HookManager::call('order.cancel.before', $order);
+
+                if ($order->coupon_id && !$order->coupon_released_at) {
+                    $coupon = Coupon::query()->whereKey($order->coupon_id)->lockForUpdate()->first();
+                    if ($coupon && $coupon->limit_use !== null) {
+                        $coupon->increment('limit_use');
+                    }
+                    $order->coupon_released_at = time();
+                }
 
                 $order->status = Order::STATUS_CANCELLED;
                 if (!$order->save()) {

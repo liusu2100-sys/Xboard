@@ -27,7 +27,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        Cache::put(CacheKey::get('SCHEDULE_LAST_CHECK_AT', null), time());
+        try {
+            Cache::put(CacheKey::get('SCHEDULE_LAST_CHECK_AT', null), time());
+        } catch (\Throwable $e) {
+            report($e);
+        }
         // v2board
         $schedule->command('xboard:statistics')->dailyAt('0:10')->onOneServer();
         // check
@@ -38,6 +42,7 @@ class Kernel extends ConsoleKernel
         // reset
         $schedule->command('reset:traffic')->everyMinute()->onOneServer()->withoutOverlapping(10);
         $schedule->command('reset:log')->daily()->onOneServer();
+        $schedule->command('device:cleanup')->dailyAt('03:30')->onOneServer()->withoutOverlapping(30);
         // send
         $schedule->command('send:remindMail', ['--force'])->dailyAt('11:30')->onOneServer();
         // horizon metrics
@@ -48,7 +53,11 @@ class Kernel extends ConsoleKernel
         // if (env('ENABLE_AUTO_BACKUP_AND_UPDATE', false)) {
         //     $schedule->command('backup:database', ['true'])->daily()->onOneServer();
         // }
-        app(PluginManager::class)->registerPluginSchedules($schedule);
+        try {
+            app(PluginManager::class)->registerPluginSchedules($schedule);
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
     }
 
