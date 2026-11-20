@@ -60,24 +60,25 @@ class CheckCommission extends Command
 
     public function autoPayCommission()
     {
-        $orders = Order::where('commission_status', 1)
+        $orderIds = Order::where('commission_status', 1)
             ->where('invite_user_id', '!=', NULL)
-            ->get();
-        foreach ($orders as $order) {
+            ->pluck('id');
+        foreach ($orderIds as $orderId) {
             try{
-                DB::beginTransaction();
-                if (!$this->payHandle($order->invite_user_id, $order)) {
-                    DB::rollBack();
-                    continue;
-                }
-                $order->commission_status = 2;
-                if (!$order->save()) {
-                    DB::rollBack();
-                    continue;
-                }
-                DB::commit();
+                DB::transaction(function () use ($orderId) {
+                    $order = Order::query()->whereKey($orderId)->lockForUpdate()->first();
+                    if (!$order || (int) $order->commission_status !== 1) {
+                        return;
+                    }
+                    if (!$this->payHandle($order->invite_user_id, $order)) {
+                        throw new \RuntimeException('返佣发放失败');
+                    }
+                    $order->commission_status = 2;
+                    if (!$order->save()) {
+                        throw new \RuntimeException('返佣状态保存失败');
+                    }
+                }, 3);
             } catch (\Exception $e){
-                DB::rollBack();
                 throw $e;
             }
         }
@@ -98,24 +99,31 @@ class CheckCommission extends Command
             ];
         }
         for ($l = 0; $l < $level; $l++) {
-            $inviter = User::find($inviteUserId);
+            $inviter = User::query()->whereKey($inviteUserId)->lockForUpdate()->first();
             if (!$inviter) continue;
             if (!isset($commissionShareLevels[$l])) continue;
             $commissionBalance = $order->commission_balance * ($commissionShareLevels[$l] / 100);
             if (!$commissionBalance) continue;
+            $idempotencyKey = hash('sha256', "{$order->id}:{$inviteUserId}:{$l}");
+            if (CommissionLog::where('idempotency_key', $idempotencyKey)->exists()) {
+                $inviteUserId = $inviter->invite_user_id;
+                continue;
+            }
+
             if ((int)admin_setting('withdraw_close_enable', 0)) {
                 $inviter->increment('balance', $commissionBalance);
             } else {
                 $inviter->increment('commission_balance', $commissionBalance);
             }
             if (!$inviter->save()) {
-                DB::rollBack();
                 return false;
             }
+
             CommissionLog::create([
                 'invite_user_id' => $inviteUserId,
                 'user_id' => $order->user_id,
                 'trade_no' => $order->trade_no,
+                'idempotency_key' => $idempotencyKey,
                 'order_amount' => $order->total_amount,
                 'get_amount' => $commissionBalance
             ]);
