@@ -10,6 +10,7 @@
 - [订阅设备管理开发与变更记录](./subscription-device-management.md)
 - [稳定性与幂等优化变更记录](./stability-idempotency-2026-09-18.md)
 - [节点内核与订阅模板兼容性审计](./node-kernel-subscription-audit-2026-09-19.md)
+- [官方版本与本地定制的整合记录](./upstream-integration-2026-11-20.md)
 
 ## 阅读建议
 

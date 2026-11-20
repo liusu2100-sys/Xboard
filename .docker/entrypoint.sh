@@ -24,6 +24,8 @@ else
 fi
 export OCTANE_HOST OCTANE_PORT WS_HOST WS_PORT CADDY_LISTEN_PORT
 export OCTANE_INTERNAL_PORT="${OCTANE_PORT}"
+: "${ENABLE_SCHEDULER:=${ENABLE_WEB:-true}}"
+export ENABLE_SCHEDULER
 
 # ---------------------------------------------------------------------------
 # Auto-tune worker counts based on the host (CPU + memory).

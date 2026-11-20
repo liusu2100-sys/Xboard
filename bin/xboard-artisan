@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -eu
+
+PHP_BIN="${XBOARD_PHP:-}"
+if [ -z "$PHP_BIN" ]; then
+    if command -v php82 >/dev/null 2>&1; then
+        PHP_BIN="$(command -v php82)"
+    else
+        PHP_BIN="$(command -v php)"
+    fi
+fi
+
+if ! "$PHP_BIN" -r 'exit(version_compare(PHP_VERSION, "8.2.0", ">=") ? 0 : 1);'; then
+    echo "XBoard requires PHP 8.2 or newer; selected binary: $PHP_BIN" >&2
+    exit 1
+fi
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec "$PHP_BIN" "$SCRIPT_DIR/../artisan" "$@"

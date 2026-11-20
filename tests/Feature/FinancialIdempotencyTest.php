@@ -16,6 +16,7 @@ use App\Services\GiftCardService;
 use App\Services\OrderService;
 use App\Support\Setting;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Tests\TestCase;
@@ -25,6 +26,9 @@ class FinancialIdempotencyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        config()->set('database.connections.financial_test', config('database.connections.sqlite'));
+        DB::setDefaultConnection('financial_test');
 
         Schema::create('v2_coupon', function (Blueprint $table) {
             $table->increments('id');

@@ -39,12 +39,15 @@ docker compose up -d
 
 ## 🐳 Docker Management
 
-This deployment is managed by `compose.yaml` and runs four services:
+The Compose samples support a single container or separate services. Use `compose.split.sample.yaml` for this split deployment:
 
+- `caddy`: HTTP and WebSocket reverse proxy on port `7001`
 - `web`: Laravel Octane, listening on port `7001`
 - `horizon`: Laravel Horizon queue workers
 - `ws-server`: WebSocket server
 - `redis`: Redis with the shared `redis-data` volume
+
+The custom image includes the scheduler in the `web` container. If you already run an external scheduler, set `ENABLE_SCHEDULER=false` on the web service. Set `XBOARD_IMAGE` to the tag or digest of your custom image before starting Compose.
 
 Common commands:
 
@@ -83,11 +86,11 @@ docker compose up -d
 
 For aaPanel or Nginx reverse proxy deployments, proxy traffic to `127.0.0.1:7001`. After changing PHP routes, controllers, protocol generators, or subscription templates, reload Octane. Do not use `docker compose down -v` unless you intentionally want to remove the Redis volume.
 
-Flavor theme deployment:
+Build a custom Docker image from the checked-out code:
 
 ```bash
-cd theme/Flavor
-./deploy.sh
+git submodule update --init --recursive
+docker build -t xboard-custom:local .
 ```
 
 ## 📖 Documentation
