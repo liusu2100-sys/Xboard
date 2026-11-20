@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1\Server;
 use App\Http\Controllers\Controller;
 use App\Services\DeviceStateService;
 use App\Services\ServerService;
+use App\Services\SubscriptionDeviceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\JsonResponse;
@@ -91,6 +92,29 @@ class UniProxyController extends Controller
         ServerService::processAlive($node->id, $data);
 
         return response()->json(['data' => true]);
+    }
+
+    // Optional analytics endpoint for upgraded node agents. Values are deltas.
+    public function deviceTraffic(Request $request): JsonResponse
+    {
+        $node = $this->getNodeInfo($request);
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            return response()->json(['error' => 'Invalid device traffic data'], 422);
+        }
+
+        $reportId = isset($payload['report_id']) ? (string) $payload['report_id'] : null;
+        $data = isset($payload['data']) && is_array($payload['data']) ? $payload['data'] : $payload;
+        if ($reportId !== null) {
+            unset($data['report_id']);
+        }
+
+        try {
+            $accepted = app(SubscriptionDeviceService::class)->recordTraffic($node, $data, $reportId);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+        return response()->json(['data' => true, 'accepted' => $accepted]);
     }
 
     public function status(Request $request): JsonResponse

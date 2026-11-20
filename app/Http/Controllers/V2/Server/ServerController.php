@@ -4,10 +4,12 @@ namespace App\Http\Controllers\V2\Server;
 
 use App\Http\Controllers\Controller;
 use App\Services\ServerService;
+use App\Services\SubscriptionDeviceService;
 use App\WebSocket\NodeWorker;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ServerController extends Controller
 {
@@ -61,6 +63,26 @@ class ServerController extends Controller
         $online = $request->input('online');
         if (is_array($online) && !empty($online)) {
             ServerService::processOnline($node, $online);
+        }
+
+        // Optional per-device traffic deltas. Aggregate traffic above remains
+        // the sole billing source, so this analytics channel cannot double bill.
+        $deviceTraffic = $request->input('device_traffic');
+        if (is_array($deviceTraffic) && !empty($deviceTraffic)) {
+            try {
+                app(SubscriptionDeviceService::class)->recordTraffic(
+                    $node,
+                    $deviceTraffic,
+                    $request->filled('device_traffic_report_id')
+                        ? (string) $request->input('device_traffic_report_id')
+                        : null
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Device traffic report failed', [
+                    'node_id' => $node->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $status = $request->input('status');

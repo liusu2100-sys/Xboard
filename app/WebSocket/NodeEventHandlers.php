@@ -6,6 +6,7 @@ use App\Models\Server;
 use App\Services\DeviceStateService;
 use App\Services\NodeRegistry;
 use App\Services\ServerService;
+use App\Services\SubscriptionDeviceService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -98,6 +99,29 @@ class NodeEventHandlers
         ]);
 
         Log::debug("[WS] Node#{$nodeId} requested devices, sent " . count($devices) . " users");
+    }
+
+    /**
+     * Handle optional per-device traffic deltas from upgraded node agents.
+     */
+    public static function handleDeviceTraffic(TcpConnection $conn, int $nodeId, array $data): void
+    {
+        $node = Server::find($nodeId);
+        if (!$node || !$data) {
+            return;
+        }
+
+        $reportId = isset($data['report_id']) ? (string) $data['report_id'] : null;
+        $payload = isset($data['data']) && is_array($data['data']) ? $data['data'] : $data;
+        unset($payload['report_id'], $payload['node_id']);
+
+        try {
+            app(SubscriptionDeviceService::class)->recordTraffic($node, $payload, $reportId);
+        } catch (\Throwable $e) {
+            Log::warning("[WS] Node#{$nodeId} device traffic failed", [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
