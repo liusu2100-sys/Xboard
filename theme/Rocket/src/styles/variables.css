@@ -1,0 +1,126 @@
+:root {
+  /* Primary - AirRocket inspired teal */
+  --c-primary: #14b8a6;
+  --c-primary-hover: #0d9488;
+  --c-primary-light: rgba(20, 184, 166, 0.12);
+  --c-primary-glow: rgba(20, 184, 166, 0.22);
+  --c-primary-soft: #f0fdfa;
+  --c-accent: #3b82f6;
+  --c-accent-hover: #2563eb;
+  --c-accent-light: rgba(59, 130, 246, 0.12);
+  --c-accent-2: #06b6d4;
+
+  /* Backgrounds - clean light surface */
+  --c-bg-base: #f8fafc;
+  --c-bg-card: #ffffff;
+  --c-bg-solid: #ffffff;
+  --c-bg-elevated: #ffffff;
+  --c-bg-input: #ffffff;
+  --c-bg-hover: #f1f5f9;
+  --c-bg-shell: #f8fafc;
+  --c-surface-glass: rgba(255, 255, 255, 0.85);
+
+  /* Text */
+  --c-text-1: #0f172a;
+  --c-text-2: #475569;
+  --c-text-3: #94a3b8;
+  --c-text-inverse: #ffffff;
+  --c-text-input: #0f172a;
+
+  /* Borders */
+  --c-border: #e2e8f0;
+  --c-border-light: #f1f5f9;
+
+  /* Status */
+  --c-success: #10b981;
+  --c-warning: #f59e0b;
+  --c-danger: #ef4444;
+  --c-info: #3b82f6;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, #14b8a6, #2dd4bf);
+  --gradient-accent: linear-gradient(135deg, var(--c-accent), var(--c-accent-2));
+  --gradient-hero: linear-gradient(135deg, #0f766e 0%, #1d9a8b 45%, #2f7df0 100%);
+  --gradient-panel: linear-gradient(145deg, #ffffff, #f8fafc);
+
+  /* Shadows - modern soft floating */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.02), 0 4px 20px rgba(0, 0, 0, 0.03);
+  --shadow-float: 0 10px 25px rgba(20, 184, 166, 0.15);
+  --shadow-glow: 0 8px 20px rgba(20, 184, 166, 0.2);
+
+  /* Radius */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-full: 9999px;
+
+  /* Spacing */
+  --s-xs: 4px;
+  --s-sm: 8px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 32px;
+  --s-2xl: 48px;
+
+  /* Typography */
+  --font: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-base: 1rem;
+  --fs-md: 1.125rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 2rem;
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* Layout */
+  --sidebar-w: 240px;
+  --sidebar-collapsed-w: 64px;
+  --topbar-h: 64px;
+  --navbar-h: 60px;
+
+  /* Transitions */
+  --t-fast: 150ms ease;
+  --t-base: 250ms ease;
+  --t-slow: 400ms ease;
+}
+
+/* ========== Dark Mode ========== */
+[data-theme="dark"] {
+  --c-primary: #2dd4bf;
+  --c-primary-hover: #14b8a6;
+  --c-primary-light: rgba(45, 212, 191, 0.14);
+  --c-primary-glow: rgba(45, 212, 191, 0.24);
+  --c-primary-soft: rgba(45, 212, 191, 0.1);
+  --c-accent: #60a5fa;
+  --c-accent-hover: #3b82f6;
+
+  --c-bg-base: #0f172a;
+  --c-bg-card: #1e293b;
+  --c-bg-solid: #1e293b;
+  --c-bg-elevated: #334155;
+  --c-bg-input: #ffffff;
+  --c-bg-hover: #334155;
+  --c-bg-shell: #0f172a;
+  --c-surface-glass: rgba(30, 41, 59, 0.85);
+
+  --c-text-1: #f8fafc;
+  --c-text-2: #cbd5e1;
+  --c-text-3: #94a3b8;
+  --c-text-input: #0f172a;
+
+  --c-border: #334155;
+  --c-border-light: #1e293b;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3);
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.4);
+}

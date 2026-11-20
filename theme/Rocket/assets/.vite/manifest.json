@@ -1,0 +1,247 @@
+{
+  "_clipboard.BlfUBHzC.js": {
+    "file": "assets/clipboard.BlfUBHzC.js",
+    "name": "clipboard"
+  },
+  "_i18n.OjagLJJq.js": {
+    "file": "assets/i18n.OjagLJJq.js",
+    "name": "i18n",
+    "imports": [
+      "index.html"
+    ]
+  },
+  "_normalizers.BUYVMp_1.js": {
+    "file": "assets/normalizers.BUYVMp_1.js",
+    "name": "normalizers",
+    "imports": [
+      "index.html"
+    ]
+  },
+  "_user.BIWYC7WZ.js": {
+    "file": "assets/user.BIWYC7WZ.js",
+    "name": "user",
+    "imports": [
+      "index.html",
+      "_normalizers.BUYVMp_1.js"
+    ]
+  },
+  "index.html": {
+    "file": "assets/app.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "dynamicImports": [
+      "src/views/home/Home.vue",
+      "src/views/auth/Login.vue",
+      "src/views/auth/Register.vue",
+      "src/views/auth/Forget.vue",
+      "src/components/layout/AppLayout.vue",
+      "src/views/dashboard/Dashboard.vue",
+      "src/views/shop/Shop.vue",
+      "src/views/order/Orders.vue",
+      "src/views/order/OrderDetail.vue",
+      "src/views/server/Servers.vue",
+      "src/views/invite/Invite.vue",
+      "src/views/gift/GiftCard.vue",
+      "src/views/gift/GiftCard.vue",
+      "src/views/ticket/Tickets.vue",
+      "src/views/ticket/TicketDetail.vue",
+      "src/views/knowledge/Knowledge.vue",
+      "src/views/profile/Profile.vue",
+      "src/views/traffic/Traffic.vue"
+    ]
+  },
+  "src/assets/images/invite_robot.png": {
+    "file": "assets/invite_robot.BFxX6_pY.png",
+    "src": "src/assets/images/invite_robot.png"
+  },
+  "src/assets/images/promo_gift.png": {
+    "file": "assets/promo_gift.C1A2jrN5.png",
+    "src": "src/assets/images/promo_gift.png"
+  },
+  "src/components/layout/AppLayout.vue": {
+    "file": "assets/AppLayout.Bvkzpevq.js",
+    "name": "AppLayout",
+    "src": "src/components/layout/AppLayout.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_i18n.OjagLJJq.js",
+      "_user.BIWYC7WZ.js",
+      "_normalizers.BUYVMp_1.js"
+    ]
+  },
+  "src/views/auth/Forget.vue": {
+    "file": "assets/Forget.CBfIpGF7.js",
+    "name": "Forget",
+    "src": "src/views/auth/Forget.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/views/auth/Login.vue": {
+    "file": "assets/Login.BHouSfTU.js",
+    "name": "Login",
+    "src": "src/views/auth/Login.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/views/auth/Register.vue": {
+    "file": "assets/Register.CMsE83Vy.js",
+    "name": "Register",
+    "src": "src/views/auth/Register.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/views/dashboard/Dashboard.vue": {
+    "file": "assets/Dashboard.B1TLZ8E-.js",
+    "name": "Dashboard",
+    "src": "src/views/dashboard/Dashboard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_clipboard.BlfUBHzC.js",
+      "_user.BIWYC7WZ.js",
+      "_normalizers.BUYVMp_1.js"
+    ],
+    "assets": [
+      "assets/invite_robot.BFxX6_pY.png",
+      "assets/promo_gift.C1A2jrN5.png"
+    ]
+  },
+  "src/views/gift/GiftCard.vue": {
+    "file": "assets/GiftCard.CNvqi5Rp.js",
+    "name": "GiftCard",
+    "src": "src/views/gift/GiftCard.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_normalizers.BUYVMp_1.js",
+      "_user.BIWYC7WZ.js"
+    ]
+  },
+  "src/views/home/Home.vue": {
+    "file": "assets/Home.DRtcKcS0.js",
+    "name": "Home",
+    "src": "src/views/home/Home.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html"
+    ]
+  },
+  "src/views/invite/Invite.vue": {
+    "file": "assets/Invite.GMSqV04c.js",
+    "name": "Invite",
+    "src": "src/views/invite/Invite.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_normalizers.BUYVMp_1.js",
+      "_user.BIWYC7WZ.js",
+      "_clipboard.BlfUBHzC.js"
+    ]
+  },
+  "src/views/knowledge/Knowledge.vue": {
+    "file": "assets/Knowledge.CyMlWZ3k.js",
+    "name": "Knowledge",
+    "src": "src/views/knowledge/Knowledge.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_normalizers.BUYVMp_1.js",
+      "index.html",
+      "_i18n.OjagLJJq.js"
+    ]
+  },
+  "src/views/order/OrderDetail.vue": {
+    "file": "assets/OrderDetail.DAS-SNfH.js",
+    "name": "OrderDetail",
+    "src": "src/views/order/OrderDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_normalizers.BUYVMp_1.js"
+    ]
+  },
+  "src/views/order/Orders.vue": {
+    "file": "assets/Orders.DIajayil.js",
+    "name": "Orders",
+    "src": "src/views/order/Orders.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_normalizers.BUYVMp_1.js"
+    ]
+  },
+  "src/views/profile/Profile.vue": {
+    "file": "assets/Profile.DuQVB-7m.js",
+    "name": "Profile",
+    "src": "src/views/profile/Profile.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_user.BIWYC7WZ.js",
+      "_normalizers.BUYVMp_1.js",
+      "_clipboard.BlfUBHzC.js"
+    ]
+  },
+  "src/views/server/Servers.vue": {
+    "file": "assets/Servers.BukbF0wR.js",
+    "name": "Servers",
+    "src": "src/views/server/Servers.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_normalizers.BUYVMp_1.js",
+      "index.html"
+    ]
+  },
+  "src/views/shop/Shop.vue": {
+    "file": "assets/Shop.BVlLgw9b.js",
+    "name": "Shop",
+    "src": "src/views/shop/Shop.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_normalizers.BUYVMp_1.js",
+      "_user.BIWYC7WZ.js"
+    ]
+  },
+  "src/views/ticket/TicketDetail.vue": {
+    "file": "assets/TicketDetail.BGQr91DG.js",
+    "name": "TicketDetail",
+    "src": "src/views/ticket/TicketDetail.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_normalizers.BUYVMp_1.js"
+    ]
+  },
+  "src/views/ticket/Tickets.vue": {
+    "file": "assets/Tickets.CXff0grU.js",
+    "name": "Tickets",
+    "src": "src/views/ticket/Tickets.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "index.html",
+      "_normalizers.BUYVMp_1.js"
+    ]
+  },
+  "src/views/traffic/Traffic.vue": {
+    "file": "assets/Traffic.Bex3dG7Q.js",
+    "name": "Traffic",
+    "src": "src/views/traffic/Traffic.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_normalizers.BUYVMp_1.js",
+      "index.html"
+    ]
+  },
+  "style.css": {
+    "file": "assets/style.css",
+    "src": "style.css"
+  }
+}

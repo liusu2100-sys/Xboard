@@ -1,0 +1,84 @@
+{
+  "name": "Rocket",
+  "description": "参考 AirRocket 登录后台风格的暗色网络面板主题",
+  "version": "1.1.0",
+  "images": "",
+  "configs": [
+    {
+      "label": "主题色",
+      "placeholder": "请选择主题颜色",
+      "field_name": "theme_color",
+      "field_type": "select",
+      "select_options": {
+        "default": "默认(绿色)",
+        "blue": "蓝色",
+        "purple": "紫色",
+        "orange": "橙色"
+      },
+      "default_value": "default"
+    },
+    {
+      "label": "背景图片",
+      "placeholder": "请输入背景图片URL",
+      "field_name": "background_url",
+      "field_type": "input"
+    },
+    {
+      "label": "首页宣传语",
+      "placeholder": "请输入首页主宣传语",
+      "field_name": "home_slogan",
+      "field_type": "input",
+      "default_value": "无限制畅享全球网络加速"
+    },
+    {
+      "label": "活动弹窗",
+      "placeholder": "是否开启活动弹窗",
+      "field_name": "promo_enable",
+      "field_type": "select",
+      "select_options": {
+        "1": "开启",
+        "0": "关闭"
+      },
+      "default_value": "1"
+    },
+    {
+      "label": "活动标题",
+      "placeholder": "例如 EveryOne 收下这份礼物吧！",
+      "field_name": "promo_title",
+      "field_type": "input",
+      "default_value": "EveryOne 收下这份礼物吧！"
+    },
+    {
+      "label": "活动说明",
+      "placeholder": "例如 本次优惠金额",
+      "field_name": "promo_subtitle",
+      "field_type": "input",
+      "default_value": "本次优惠金额"
+    },
+    {
+      "label": "活动金额",
+      "placeholder": "例如 20.00",
+      "field_name": "promo_amount",
+      "field_type": "input",
+      "default_value": "0.00"
+    },
+    {
+      "label": "活动优惠码",
+      "placeholder": "填写后点击弹窗会自动带到购买页",
+      "field_name": "promo_coupon_code",
+      "field_type": "input"
+    },
+    {
+      "label": "活动结束时间",
+      "placeholder": "格式：2026-12-31 23:59:59，可留空",
+      "field_name": "promo_ends_at",
+      "field_type": "input"
+    },
+    {
+      "label": "自定义页脚HTML",
+      "placeholder": "可以实现客服JS代码的加入等",
+      "field_name": "custom_html",
+      "field_type": "textarea"
+    }
+  ]
+}

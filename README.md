@@ -37,12 +37,67 @@ docker compose up -d
 > After installation, visit: http://SERVER_IP:7001  
 > ⚠️ Make sure to save the admin credentials shown during installation
 
+## 🐳 Docker Management
+
+This deployment is managed by `compose.yaml` and runs four services:
+
+- `web`: Laravel Octane, listening on port `7001`
+- `horizon`: Laravel Horizon queue workers
+- `ws-server`: WebSocket server
+- `redis`: Redis with the shared `redis-data` volume
+
+Common commands:
+
+```bash
+# Show service status
+docker compose ps
+
+# Start or restart all services
+docker compose up -d
+docker compose restart
+
+# Restart one service
+docker compose restart web
+docker compose restart horizon
+docker compose restart ws-server
+
+# View logs
+docker compose logs -f web
+docker compose logs -f horizon
+docker compose logs -f ws-server
+
+# Run Artisan commands in the web container
+docker compose exec web php artisan migrate --force
+docker compose exec web php artisan optimize:clear
+
+# Reload Octane after changing backend PHP code or routes
+docker compose exec web php artisan octane:reload
+
+# Stop services without deleting Redis data
+docker compose down
+
+# Pull a newer image and recreate containers
+docker compose pull
+docker compose up -d
+```
+
+For aaPanel or Nginx reverse proxy deployments, proxy traffic to `127.0.0.1:7001`. After changing PHP routes, controllers, protocol generators, or subscription templates, reload Octane. Do not use `docker compose down -v` unless you intentionally want to remove the Redis volume.
+
+Flavor theme deployment:
+
+```bash
+cd theme/Flavor
+./deploy.sh
+```
+
 ## 📖 Documentation
 
 ### 🔄 Upgrade Notice
 > 🚨 **Important:** This version involves significant changes. Please strictly follow the upgrade documentation and backup your database before upgrading. Note that upgrading and migration are different processes, do not confuse them.
 
 ### Development Guides
+- [中文项目介绍文档](./docs/zh-CN/project-overview.md) - Xboard 架构、模块、业务流和主题系统总览
+- [中文开发文档](./docs/zh-CN/development-guide.md) - 后端、主题、订阅协议、插件、发布和排障指南
 - [Plugin Development Guide](./docs/en/development/plugin-development-guide.md) - Complete guide for developing XBoard plugins
 
 ### Deployment Guides
